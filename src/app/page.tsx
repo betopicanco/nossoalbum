@@ -80,10 +80,10 @@ export default async function Home() {
 
       <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-6 px-0 md:grid-cols-[240px_minmax(0,680px)] md:px-6 lg:grid-cols-[250px_minmax(0,680px)_260px]">
         <aside className="hidden pt-8 md:block">
-          <div className="sticky top-24 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+          {/* <div className="sticky top-24 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
             <p className="text-sm font-medium text-zinc-200">Seu álbum</p>
             <p className="mt-2 text-sm text-zinc-400">Arraste imagens e vídeos para public/album</p>
-          </div>
+          </div> */}
         </aside>
 
         <main className="pb-8 pt-3 md:pt-8">
@@ -139,10 +139,10 @@ export default async function Home() {
         </main>
 
         <aside className="hidden pt-8 lg:block">
-          <div className="sticky top-24 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+          {/* <div className="sticky top-24 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
             <p className="text-sm font-medium text-zinc-200">Resumo</p>
             <p className="mt-2 text-sm text-zinc-400">{albumItems.length} posts no álbum</p>
-          </div>
+          </div> */}
         </aside>
       </div>
     </div>
