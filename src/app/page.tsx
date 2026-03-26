@@ -125,10 +125,6 @@ export default async function Home() {
                       />
                     )}
                   </div>
-
-                  <div className="px-4 py-3 text-xs text-zinc-400">
-                    Publicado em <span className="text-zinc-300">{item.date}</span>
-                  </div>
                 </article>
               ))
             )}
