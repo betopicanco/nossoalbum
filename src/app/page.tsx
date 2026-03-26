@@ -72,9 +72,6 @@ export default async function Home() {
       <header className="sticky top-0 z-20 border-b border-zinc-800/80 bg-black/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 md:px-6">
           <span className="text-lg font-semibold tracking-tight">nossoalbum</span>
-          <span className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-300">
-            Modo escuro
-          </span>
         </div>
       </header>
 
@@ -83,7 +80,7 @@ export default async function Home() {
           {/* <div className="sticky top-24 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
             <p className="text-sm font-medium text-zinc-200">Seu álbum</p>
             <p className="mt-2 text-sm text-zinc-400">Arraste imagens e vídeos para public/album</p>
-          </div> */}
+          </div> */}             
         </aside>
 
         <main className="pb-8 pt-3 md:pt-8">
