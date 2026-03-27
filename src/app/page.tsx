@@ -2,17 +2,29 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import Image from "next/image";
 
+type AlbumMetadataEntry = {
+  date?: string;
+  location?: string;
+  description?: string;
+};
+
+type AlbumMetadata = Record<string, AlbumMetadataEntry>;
+
 type AlbumItem = {
   id: string;
+  filename: string;
   src: string;
   type: "image" | "video";
   date: string;
   timestamp: number;
+  location: string | null;
+  description: string | null;
 };
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"]);
 const VIDEO_EXTENSIONS = new Set([".mp4", ".webm", ".mov", ".ogg", ".m4v"]);
 const ALBUM_DIR = path.join(process.cwd(), "public", "album");
+const ALBUM_METADATA_FILE = path.join(ALBUM_DIR, "metadata.json");
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -20,9 +32,50 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
+function getMetadataDate(dateValue: string | undefined, fallbackDate: Date) {
+  if (!dateValue) {
+    return fallbackDate;
+  }
+
+  // Parse YYYY-MM-DD respecting local timezone (not UTC)
+  const match = dateValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const [, yearStr, monthStr, dayStr] = match;
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr) - 1; // Month is 0-indexed
+    const day = parseInt(dayStr);
+    return new Date(year, month, day);
+  }
+
+  const parsed = new Date(dateValue);
+  return Number.isNaN(parsed.getTime()) ? fallbackDate : parsed;
+}
+
+async function getAlbumMetadata(): Promise<AlbumMetadata> {
+  try {
+    const content = await fs.readFile(ALBUM_METADATA_FILE, "utf-8");
+    const parsed = JSON.parse(content) as unknown;
+
+    if (!parsed || typeof parsed !== "object") {
+      return {};
+    }
+
+    return parsed as AlbumMetadata;
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+
+    if (code === "ENOENT" || error instanceof SyntaxError) {
+      return {};
+    }
+
+    throw error;
+  }
+}
+
 async function getAlbumItems(): Promise<AlbumItem[]> {
   try {
     const entries = await fs.readdir(ALBUM_DIR);
+    const metadata = await getAlbumMetadata();
 
     const items = await Promise.all(
       entries.map(async (entry) => {
@@ -41,12 +94,20 @@ async function getAlbumItems(): Promise<AlbumItem[]> {
           return null;
         }
 
+        const itemMetadata = metadata[entry];
+        const itemDate = getMetadataDate(itemMetadata?.date, stats.mtime);
+        const location = itemMetadata?.location?.trim() || null;
+        const description = itemMetadata?.description?.trim() || null;
+
         return {
           id: `${entry}-${stats.mtimeMs}`,
+          filename: entry,
           src: `/album/${encodeURIComponent(entry)}`,
           type: isImage ? "image" : "video",
-          date: formatDate(stats.mtime),
-          timestamp: stats.mtimeMs,
+          date: formatDate(itemDate),
+          timestamp: itemDate.getTime(),
+          location,
+          description,
         } satisfies AlbumItem;
       })
     );
@@ -91,13 +152,16 @@ export default async function Home() {
               albumItems.map((item) => (
                 <article key={item.id} className="overflow-hidden border-y border-zinc-800 bg-black md:rounded-xl md:border">
                   <div className="flex items-center justify-between px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      
-                    </div>
+                    <p></p>
                     <time className="text-xs text-zinc-400">{item.date}</time>
                   </div>
 
                   <div className="relative w-full bg-zinc-950">
+                    {item.location ? (
+                      <div className="absolute top-3 left-3 z-10 text-[8px] font-semibold text-white bg-black/60 px-2 py-1 rounded backdrop-blur-sm">
+                        {item.location}
+                      </div>
+                    ) : null}
                     {item.type === "image" ? (
                       <Image
                         src={item.src}
@@ -111,17 +175,20 @@ export default async function Home() {
                     ) : (
                       <video
                         className="h-full w-full object-cover"
-                        controls
                         autoPlay
                         muted
                         loop
                         playsInline
-                        preload="none"
+                        preload="auto"
                       >
                         <source src={item.src} type="video/mp4" />
                         Seu navegador não conseguiu reproduzir este vídeo.
                       </video>
                     )}
+                  </div>
+
+                  <div className="space-y-1 px-4 py-3 text-sm">
+                    {item.description ? <p className="text-zinc-200">{item.description}</p> : null}
                   </div>
                 </article>
               ))
