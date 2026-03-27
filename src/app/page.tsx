@@ -1,7 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import Image from "next/image";
-import AutoPauseVideo from "./auto-pause-video";
+import PostCarousel from "./post-carousel";
 
 type AlbumMetadataEntry = {
   date?: string;
@@ -13,13 +12,21 @@ type AlbumMetadata = Record<string, AlbumMetadataEntry>;
 
 type AlbumItem = {
   id: string;
-  filename: string;
   src: string;
   type: "image" | "video";
-  date: string;
+  dateKey: string;
+  dateLabel: string;
   timestamp: number;
   location: string | null;
   description: string | null;
+};
+
+type AlbumPost = {
+  id: string;
+  dateKey: string;
+  dateLabel: string;
+  timestamp: number;
+  items: AlbumItem[];
 };
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"]);
@@ -31,6 +38,13 @@ function formatDate(date: Date) {
   return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "medium",
   }).format(date);
+}
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function getMetadataDate(dateValue: string | undefined, fallbackDate: Date) {
@@ -102,10 +116,10 @@ async function getAlbumItems(): Promise<AlbumItem[]> {
 
         return {
           id: `${entry}-${stats.mtimeMs}`,
-          filename: entry,
           src: `/album/${encodeURIComponent(entry)}`,
           type: isImage ? "image" : "video",
-          date: formatDate(itemDate),
+          dateKey: toDateKey(itemDate),
+          dateLabel: formatDate(itemDate),
           timestamp: itemDate.getTime(),
           location,
           description,
@@ -127,6 +141,26 @@ async function getAlbumItems(): Promise<AlbumItem[]> {
 
 export default async function Home() {
   const albumItems = await getAlbumItems();
+  const albumPostsMap = new Map<string, AlbumPost>();
+
+  for (const item of albumItems) {
+    const existingPost = albumPostsMap.get(item.dateKey);
+
+    if (existingPost) {
+      existingPost.items.push(item);
+      continue;
+    }
+
+    albumPostsMap.set(item.dateKey, {
+      id: item.dateKey,
+      dateKey: item.dateKey,
+      dateLabel: item.dateLabel,
+      timestamp: item.timestamp,
+      items: [item],
+    });
+  }
+
+  const albumPosts = Array.from(albumPostsMap.values()).sort((a, b) => b.timestamp - a.timestamp);
 
   return (
     <div className="min-h-screen bg-black text-zinc-100">
@@ -142,7 +176,7 @@ export default async function Home() {
 
         <main className="pb-8 pt-3 md:pt-8">
           <div className="mx-auto flex w-full max-w-[680px] flex-col gap-6">
-            {albumItems.length === 0 ? (
+            {albumPosts.length === 0 ? (
               <section className="mx-3 rounded-2xl border border-dashed border-zinc-700 bg-zinc-950/60 p-8 text-center md:mx-0">
                 <h1 className="text-xl font-semibold">Seu feed está vazio</h1>
                 <p className="mt-3 text-sm text-zinc-400">
@@ -150,37 +184,14 @@ export default async function Home() {
                 </p>
               </section>
             ) : (
-              albumItems.map((item) => (
-                <article key={item.id} className="overflow-hidden border-y border-zinc-800 bg-black md:rounded-xl md:border">
+              albumPosts.map((post) => (
+                <article key={post.id} className="overflow-hidden border-y border-zinc-800 bg-black md:rounded-xl md:border">
                   <div className="flex items-center justify-between px-4 py-3">
                     <p></p>
-                    <time className="text-xs text-zinc-400">{item.date}</time>
+                    <time className="text-xs text-zinc-400">{post.dateLabel}</time>
                   </div>
 
-                  <div className="relative w-full bg-zinc-950">
-                    {item.location ? (
-                      <div className="absolute top-3 left-3 z-10 text-[8px] font-semibold text-white bg-black/60 px-2 py-1 rounded backdrop-blur-sm">
-                        {item.location}
-                      </div>
-                    ) : null}
-                    {item.type === "image" ? (
-                      <Image
-                        src={item.src}
-                        alt="Foto do álbum"
-                        width={680}
-                        height={900}
-                        priority
-                        className="w-full h-auto"
-                        sizes="(max-width: 768px) 100vw, 680px"
-                      />
-                    ) : (
-                      <AutoPauseVideo src={item.src} className="h-full w-full object-cover" />
-                    )}
-                  </div>
-
-                  <div className="space-y-1 px-4 py-3 text-sm">
-                    {item.description ? <p className="text-zinc-200">{item.description}</p> : null}
-                  </div>
+                  <PostCarousel items={post.items} />
                 </article>
               ))
             )}
