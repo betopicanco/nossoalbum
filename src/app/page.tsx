@@ -17,7 +17,6 @@ const ALBUM_DIR = path.join(process.cwd(), "public", "album");
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "medium",
-    timeStyle: "short",
   }).format(date);
 }
 
@@ -76,11 +75,7 @@ export default async function Home() {
       </header>
 
       <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-6 px-0 md:grid-cols-[240px_minmax(0,680px)] md:px-6 lg:grid-cols-[250px_minmax(0,680px)_260px]">
-        <aside className="hidden pt-8 md:block">
-          {/* <div className="sticky top-24 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-            <p className="text-sm font-medium text-zinc-200">Seu álbum</p>
-            <p className="mt-2 text-sm text-zinc-400">Arraste imagens e vídeos para public/album</p>
-          </div> */}             
+        <aside className="hidden pt-8 md:block">  
         </aside>
 
         <main className="pb-8 pt-3 md:pt-8">
@@ -97,32 +92,35 @@ export default async function Home() {
                 <article key={item.id} className="overflow-hidden border-y border-zinc-800 bg-black md:rounded-xl md:border">
                   <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-rose-500 via-orange-400 to-amber-300 p-[1px]">
-                        <div className="h-full w-full rounded-full bg-zinc-950" />
-                      </div>
-                      <p className="text-sm font-medium">nossoalbum</p>
+                      
                     </div>
                     <time className="text-xs text-zinc-400">{item.date}</time>
                   </div>
 
-                  <div className="relative aspect-square w-full bg-zinc-950">
+                  <div className="relative w-full bg-zinc-950">
                     {item.type === "image" ? (
                       <Image
                         src={item.src}
                         alt="Foto do álbum"
-                        fill
+                        width={680}
+                        height={900}
                         priority
-                        className="object-cover"
+                        className="w-full h-auto"
                         sizes="(max-width: 768px) 100vw, 680px"
                       />
                     ) : (
                       <video
                         className="h-full w-full object-cover"
-                        src={item.src}
                         controls
+                        autoPlay
+                        muted
+                        loop
                         playsInline
-                        preload="metadata"
-                      />
+                        preload="none"
+                      >
+                        <source src={item.src} type="video/mp4" />
+                        Seu navegador não conseguiu reproduzir este vídeo.
+                      </video>
                     )}
                   </div>
                 </article>
@@ -132,10 +130,6 @@ export default async function Home() {
         </main>
 
         <aside className="hidden pt-8 lg:block">
-          {/* <div className="sticky top-24 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-            <p className="text-sm font-medium text-zinc-200">Resumo</p>
-            <p className="mt-2 text-sm text-zinc-400">{albumItems.length} posts no álbum</p>
-          </div> */}
         </aside>
       </div>
     </div>
