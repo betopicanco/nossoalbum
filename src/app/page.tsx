@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import Image from "next/image";
+import AutoPauseVideo from "./auto-pause-video";
 
 type AlbumMetadataEntry = {
   date?: string;
@@ -173,17 +174,7 @@ export default async function Home() {
                         sizes="(max-width: 768px) 100vw, 680px"
                       />
                     ) : (
-                      <video
-                        className="h-full w-full object-cover"
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                      >
-                        <source src={item.src} type="video/mp4" />
-                        Seu navegador não conseguiu reproduzir este vídeo.
-                      </video>
+                      <AutoPauseVideo src={item.src} className="h-full w-full object-cover" />
                     )}
                   </div>
 
